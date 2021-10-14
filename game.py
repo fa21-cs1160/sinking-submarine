@@ -1,3 +1,6 @@
+# Refact room change code
+# Add inventory
+
 class State:
     pass
 
@@ -8,30 +11,39 @@ ROOM_ENGINE = 'engine'
 ROOM_REACTOR = 'reactor'
 
 MESSAGE_CHANGE_ROOM = 'You spin the lock and go through the hatch.'
+MESSAGE_MOVEMENT_ERROR = "You can't go there from here."
+
+ROOM_MOVEMENT = [
+    ( ROOM_CONTROL, [ ROOM_REACTOR ] ),
+    ( ROOM_ENGINE, [ ROOM_REACTOR ] ),
+    ( ROOM_REACTOR, [ ROOM_CONTROL, ROOM_ENGINE ] ),
+]
 
 def handle_engine_room(state, command):
-    if command == 'go to reactor room':
-        print(MESSAGE_CHANGE_ROOM)
-        state.room = ROOM_REACTOR
+    print("You can't do that.")
 
 def handle_reactor_room(state, command):
-    if command == 'go to control room':
-        print(MESSAGE_CHANGE_ROOM)
-        state.room = ROOM_CONTROL
-    elif command == 'go to engine room':
-        print(MESSAGE_CHANGE_ROOM)
-        state.room = ROOM_ENGINE
-    else:
-        print("You can't do that.")
+    print("You can't do that.")
 
 def handle_control_room(state, command):
-    if command == 'go to reactor room':
-        print(MESSAGE_CHANGE_ROOM)
-        state.room = ROOM_REACTOR
-    elif command == COMMAND_LOOK_AROUND:
+    if command == COMMAND_LOOK_AROUND:
         print("You see a series of panels with flashing lights. It's dim and your feet are wet. That's not a good sign.")
     else:
         print("You can't do that.")
+
+def handle_room_movement(state, command):
+    room = command.replace('go to', '')\
+                  .replace('room', '')\
+                  .strip()
+
+    for source, movement in ROOM_MOVEMENT:
+        if state.room == source:
+            if room in movement:
+                print(MESSAGE_CHANGE_ROOM)
+                state.room = room
+            else:
+                print(MESSAGE_MOVEMENT_ERROR)
+            break
 
 def get_room_handler(room):
     if room == ROOM_CONTROL:
@@ -61,6 +73,11 @@ def main():
         # Get the command
         print()
         command = input('What do you want to do? ').lower()
+
+        # Check for room movement
+        if command.startswith('go to'):
+            handle_room_movement(state, command)
+            continue
 
         # Handle the command
         handler = get_room_handler(state.room)
